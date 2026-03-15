@@ -6,6 +6,8 @@ CodeToPo is a local code structure analysis tool. Select a project folder and a 
 
 ![CodeToPo Graph Highlight](docs/images/graph-highlight.png)
 
+The Mermaid graph is interactive: click a node to highlight the selected node and its directly related upstream and downstream calls. Click the blank area to clear the highlight.
+
 ## English
 
 ### Features
@@ -24,12 +26,6 @@ CodeToPo is a local code structure analysis tool. Select a project folder and a 
   - MiniMax
   - OpenAI-Compatible
 
-### Interactive Graph
-
-- Click a node in the Mermaid graph to highlight the selected node and its directly related upstream and downstream calls
-- Click the blank area in the graph to clear the highlight
-- Use the reset button to clear selection and fit the graph back into view
-
 ### Supported Languages
 
 - Python `.py`
@@ -38,32 +34,21 @@ CodeToPo is a local code structure analysis tool. Select a project folder and a 
 - C `.c`
 - C Header `.h`
 
-### Project Structure
+### Quick Start
 
-```text
-.
-├─ frontend/              # Browser frontend
-├─ core/                  # Analysis service, call graph, and core logic
-├─ languages/             # Tree-sitter language parsers
-├─ tests/                 # Unit tests
-├─ local_api.py           # Local HTTP API entrypoint
-├─ requirements.txt       # Python dependencies
-└─ start_local_api.bat    # Windows startup script
+Clone the repository:
+
+```bash
+git clone https://github.com/mrclngs/CodeToPo.git
+cd CodeToPo
 ```
 
-### Requirements
-
-- Python 3.11 or newer
-- A valid API key for your selected model provider
-
-### Installation
+Create a virtual environment and install dependencies:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\pip.exe install -r .\requirements.txt
 ```
-
-### Run
 
 Start the local backend:
 
@@ -96,6 +81,31 @@ The page returns:
 - Mermaid call graph
 - Numbered target source code
 
+### Interactive Graph
+
+- Click a graph node to highlight the selected node and its related calls
+- Click the blank area in the graph to clear the current highlight
+- Use the reset button to clear selection and fit the graph back into view
+
+### Project Structure
+
+```text
+.
+├─ frontend/              # Browser frontend
+├─ core/                  # Analysis service, call graph, and core logic
+├─ languages/             # Tree-sitter language parsers
+├─ tests/                 # Unit tests
+├─ docs/images/           # README screenshots
+├─ local_api.py           # Local HTTP API entrypoint
+├─ requirements.txt       # Python dependencies
+└─ start_local_api.bat    # Windows startup script
+```
+
+### Requirements
+
+- Python 3.11 or newer
+- A valid API key for your selected model provider
+
 ### Test
 
 ```powershell
@@ -110,6 +120,12 @@ python -m unittest discover -s tests -q
 - `.venv`, cache folders, and editor settings should not be committed
 
 ## 中文
+
+### 项目说明
+
+CodeToPo 是一个本地运行的代码结构分析工具。你选择项目目录和目标源码文件后，后端会构建跨文件调用图，并结合大模型生成针对目标文件的分析说明。
+
+上面的 Mermaid 图支持交互：点击节点会高亮当前节点以及和它直接相关的上下游调用关系，点击空白区域可以取消高亮。
 
 ### 功能
 
@@ -127,12 +143,6 @@ python -m unittest discover -s tests -q
   - MiniMax
   - OpenAI-Compatible
 
-### 图交互
-
-- 点击 Mermaid 图中的节点，会高亮当前节点以及与它直接相关的上下游调用关系
-- 点击图中的空白区域，可以清除高亮状态
-- 点击重置按钮，会清除选择并将图重新适配到可视区域
-
 ### 支持语言
 
 - Python `.py`
@@ -141,32 +151,21 @@ python -m unittest discover -s tests -q
 - C `.c`
 - C 头文件 `.h`
 
-### 项目结构
+### 快速开始
 
-```text
-.
-├─ frontend/              # 浏览器前端
-├─ core/                  # 分析服务、调用图和核心逻辑
-├─ languages/             # Tree-sitter 语言解析器
-├─ tests/                 # 单元测试
-├─ local_api.py           # 本地 HTTP API 入口
-├─ requirements.txt       # Python 依赖
-└─ start_local_api.bat    # Windows 启动脚本
+先克隆仓库：
+
+```bash
+git clone https://github.com/mrclngs/CodeToPo.git
+cd CodeToPo
 ```
 
-### 环境要求
-
-- Python 3.11 或更高版本
-- 可用的模型 API Key
-
-### 安装
+创建虚拟环境并安装依赖：
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\pip.exe install -r .\requirements.txt
 ```
-
-### 启动
 
 启动本地后端：
 
@@ -198,6 +197,31 @@ python -m venv .venv
 - AI 分析结果
 - Mermaid 调用图
 - 带行号的目标源码
+
+### 图交互
+
+- 点击图节点，会高亮当前节点及其直接相关调用
+- 点击图中的空白区域，可以清除当前高亮
+- 点击重置按钮，会清除选择并重新适配视图
+
+### 项目结构
+
+```text
+.
+├─ frontend/              # 浏览器前端
+├─ core/                  # 分析服务、调用图和核心逻辑
+├─ languages/             # Tree-sitter 语言解析器
+├─ tests/                 # 单元测试
+├─ docs/images/           # README 截图
+├─ local_api.py           # 本地 HTTP API 入口
+├─ requirements.txt       # Python 依赖
+└─ start_local_api.bat    # Windows 启动脚本
+```
+
+### 环境要求
+
+- Python 3.11 或更高版本
+- 可用的模型 API Key
 
 ### 测试
 
