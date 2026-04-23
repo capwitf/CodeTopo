@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from base_parser import CallEdge, ParseResult, SymbolDef
 
@@ -85,7 +86,7 @@ class CallResolver:
         for parse_result in self.parse_results:
             local_scope = self._resolve_imports(parse_result)
             for edge in parse_result.call_sites:
-                callee_def = self._resolve_callee(edge, local_scope)
+                callee_def = self._resolve_callee(parse_result, edge, local_scope)
                 resolved_call = ResolvedCall(edge=edge, caller_def=None, callee_def=callee_def)
                 graph.edges.append(resolved_call)
 
@@ -116,6 +117,7 @@ class CallResolver:
 
     def _resolve_callee(
         self,
+        parse_result: ParseResult,
         edge: CallEdge,
         local_scope: dict[str, tuple[str, str]],
     ) -> SymbolDef | None:
@@ -133,25 +135,67 @@ class CallResolver:
             if candidates:
                 return candidates[0]
 
-            fallback_base = parts[-1]
-            candidates = self._index.lookup_simple(fallback_base)
-            for candidate in candidates:
-                if module_name.replace(".", "/") in candidate.file_path.replace("\\", "/"):
-                    return candidate
+            candidate = self._resolve_module_candidate(module_name, parts[-1])
+            if candidate is not None:
+                return candidate
+
+            if parse_result.language == "python":
+                return self._resolve_same_file_candidate(parts[-1], edge.caller_file)
 
         candidates = self._index.lookup_qualified(callee)
         if candidates:
             for candidate in candidates:
                 if candidate.file_path == edge.caller_file:
                     return candidate
-            return candidates[0]
+            if parse_result.language != "python":
+                return candidates[0]
 
         base_name = parts[-1]
-        candidates = self._index.lookup_simple(base_name)
-        if candidates:
-            for candidate in candidates:
-                if candidate.file_path == edge.caller_file:
-                    return candidate
-            return candidates[0]
+        candidate = self._resolve_same_file_candidate(base_name, edge.caller_file)
+        if candidate is not None:
+            return candidate
 
+        if parse_result.language == "python":
+            return None
+
+        candidates = self._index.lookup_simple(base_name)
+        return candidates[0] if candidates else None
+
+    def _resolve_same_file_candidate(self, name: str, caller_file: str) -> SymbolDef | None:
+        for candidate in self._index.lookup_simple(name):
+            if candidate.file_path == caller_file:
+                return candidate
         return None
+
+    def _resolve_module_candidate(self, module_name: str, symbol_name: str) -> SymbolDef | None:
+        for candidate in self._index.lookup_simple(symbol_name):
+            if self._module_matches_candidate(module_name, candidate.file_path):
+                return candidate
+        return None
+
+    def _module_matches_candidate(self, module_name: str, file_path: str) -> bool:
+        module_name = module_name.strip(".")
+        if not module_name:
+            return False
+        return module_name in self._module_names_for_file(file_path)
+
+    def _module_names_for_file(self, file_path: str) -> set[str]:
+        try:
+            relative_path = Path(file_path).resolve().relative_to(Path(self.project_root).resolve())
+        except ValueError:
+            return set()
+
+        normalized = relative_path.as_posix()
+        module_names: set[str] = set()
+
+        if normalized.endswith("/__init__.py"):
+            package_name = normalized[: -len("/__init__.py")].replace("/", ".")
+            if package_name:
+                module_names.add(package_name)
+            return module_names
+
+        suffix = relative_path.suffix
+        if suffix:
+            module_names.add(normalized[: -len(suffix)].replace("/", "."))
+
+        return module_names

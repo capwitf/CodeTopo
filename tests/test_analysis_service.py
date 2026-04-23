@@ -67,6 +67,38 @@ class AnalysisServiceTests(unittest.TestCase):
 
         self.assertEqual(result.resolved_target_file, "sample/main.py")
 
+    def test_rejects_absolute_uploaded_file_paths(self) -> None:
+        files = [
+            UploadedFile(
+                path="C:/Users/T/Desktop/sample-project/sample/main.py",
+                content="def run():\n    return 'ok'\n",
+            ),
+        ]
+
+        with self.assertRaisesRegex(ValueError, "Uploaded file paths must be project-relative"):
+            analyze_uploaded_files(
+                files=files,
+                target_file="main.py",
+                api_key="test-key",
+                annotator=lambda *_: "# Mocked",
+            )
+
+    def test_rejects_parent_directory_traversal_in_uploaded_paths(self) -> None:
+        files = [
+            UploadedFile(
+                path="../sample/main.py",
+                content="def run():\n    return 'ok'\n",
+            ),
+        ]
+
+        with self.assertRaisesRegex(ValueError, "Uploaded file paths must stay within the project"):
+            analyze_uploaded_files(
+                files=files,
+                target_file="main.py",
+                api_key="test-key",
+                annotator=lambda *_: "# Mocked",
+            )
+
     def test_accepts_unique_basename_target(self) -> None:
         files = [
             UploadedFile(path="sample-project/pkg/main.py", content="def a():\n    return 1\n"),
