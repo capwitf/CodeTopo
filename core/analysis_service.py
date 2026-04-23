@@ -111,23 +111,10 @@ def analyze_uploaded_files(
 
 def _normalize_uploaded_files(files: list[UploadedFile]) -> list[UploadedFile]:
     normalized = [
-        UploadedFile(path=file.path.replace("\\", "/").strip("/"), content=file.content)
-        for file in files
+        UploadedFile(path=_normalize_uploaded_path(file.path), content=file.content) for file in files
     ]
     if not normalized:
         return normalized
-
-    if all(_is_absolute_path(file.path) for file in normalized):
-        common_prefix = _common_absolute_prefix([file.path for file in normalized])
-        if common_prefix:
-            prefix = f"{common_prefix}/"
-            return [
-                UploadedFile(
-                    path=file.path[len(prefix):] if file.path.startswith(prefix) else file.path,
-                    content=file.content,
-                )
-                for file in normalized
-            ]
 
     common_prefix = _common_root_segment([file.path for file in normalized])
     if not common_prefix:
@@ -141,6 +128,30 @@ def _normalize_uploaded_files(files: list[UploadedFile]) -> list[UploadedFile]:
         )
         for file in normalized
     ]
+
+
+def _normalize_uploaded_path(path: str) -> str:
+    normalized = path.replace("\\", "/").strip()
+    if normalized.startswith("file:///"):
+        normalized = normalized[8:]
+    elif normalized.startswith("file://"):
+        normalized = normalized[7:]
+
+    if _is_absolute_path(normalized):
+        raise ValueError("Uploaded file paths must be project-relative.")
+
+    parts: list[str] = []
+    for part in normalized.split("/"):
+        if not part or part == ".":
+            continue
+        if part == "..":
+            raise ValueError("Uploaded file paths must stay within the project.")
+        parts.append(part)
+
+    if not parts:
+        raise ValueError("Uploaded file paths must not be empty.")
+
+    return "/".join(parts)
 
 
 def _common_root_segment(paths: list[str]) -> str:
@@ -190,17 +201,3 @@ def _is_absolute_path(path: str) -> bool:
     return normalized.startswith("/") or (
         len(normalized) > 2 and normalized[1] == ":" and normalized[2] == "/"
     )
-
-
-def _common_absolute_prefix(paths: list[str]) -> str:
-    split_paths = [path.replace("\\", "/").split("/") for path in paths if path]
-    if not split_paths:
-        return ""
-
-    shared_segments: list[str] = []
-    for path_segments in zip(*split_paths):
-        if len(set(path_segments)) != 1:
-            break
-        shared_segments.append(path_segments[0])
-
-    return "/".join(shared_segments)
